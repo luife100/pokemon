@@ -49,30 +49,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        //vm.getPokemonsList()}
-
-        vm.postModelListLiveData?.observe(this, Observer {
-            println("ViewModel changed!")
-            if (it!=null){
-                println("This is the list: $it")
-            }else{
-                Toast.makeText(this,"Something Wrong",Toast.LENGTH_LONG).show()
-                println("No list found: $it")
-            }
-
-        })
-        vm.pokemonLiveData.observe(this, Observer {
-            println("Pokemon changed!")
-            if (it!=null){
-                println("This is the pokemon: $it")
-            }else{
-                Toast.makeText(this,"Something Wrong Pokemon",Toast.LENGTH_LONG).show()
-                println("No pokemon found: $it")
-            }
-
-        })
-
     }
 
     @Composable
