@@ -5,7 +5,7 @@ import com.example.pokemon.network.PokemonService
 
 class HomeRepository {
    companion object{
-       val limit = 20
+       const val limit = 20
    }
     suspend fun getPokemonsList(offset:Int?): List<PokemonListItem> {
         val pokemonService = PokeAPI.getApiClient().create(PokemonService::class.java)

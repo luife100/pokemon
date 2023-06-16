@@ -12,15 +12,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,36 +58,32 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun DisplayPokemons(vm: HomeViewModel, modifier: Modifier = Modifier) {
+        val scrollState = rememberLazyListState()
         val pokemonsList = vm.postModelListLiveData.observeAsState()
         var showDialog by rememberSaveable { mutableStateOf(false)  }
-        var offset by rememberSaveable { mutableStateOf(vm.offset)  }
         if (showDialog) ShowDialog(vm, onDismiss ={ showDialog = false}, modifier = Modifier)
         Column {
-          Row{
-              Button(onClick = {
-                  offset = vm.decreaseOffset()
-                               }, enabled = offset!=null) {
-                  Text(text = "Previous")
-              }
-              Button(onClick = {
-                  offset= vm.increaseOffset()
-              }) {
-                Text(text = "Next")
-            }
-            }
-            LazyColumn {
+            LazyColumn(state=scrollState) {
                 itemsIndexed(pokemonsList.value ?: listOf()) { index, item ->
                     Text(text = item.name,
                         modifier = Modifier
                             .padding(all = 10.dp)
                             .clickable {
-                                val offsetNotNull:Int = offset ?: 0
-                                vm.getPokemon(index + 1+offsetNotNull)
+                                vm.getPokemon(index + 1)
                                 showDialog = true
                             })
                 }
             }
+            val endOfListReached by remember {
+                derivedStateOf {
+                    scrollState.isScrolledToEnd()
+                }
+            }
 
+            // act when end of list reached
+            LaunchedEffect(endOfListReached) {
+                vm.increaseList()
+            }
         }
 }
 
@@ -118,3 +119,5 @@ fun GreetingPreview() {
         DisplayPokemons(HomeViewModel())
     }
 }}
+
+fun LazyListState.isScrolledToEnd() = layoutInfo.visibleItemsInfo.lastOrNull()?.index == layoutInfo.totalItemsCount - 1

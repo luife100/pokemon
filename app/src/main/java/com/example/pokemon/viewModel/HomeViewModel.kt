@@ -1,5 +1,6 @@
 package com.example.pokemon.viewModel
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,19 +12,21 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel:ViewModel() {
     private var homeRepository: HomeRepository?=null
-    private val _postModelListLiveData = MutableLiveData<List<PokemonListItem>>()
-    val postModelListLiveData :LiveData<List<PokemonListItem>> = _postModelListLiveData
+    private val _postModelListLiveData = MutableLiveData<SnapshotStateList<PokemonListItem>>()
+    val postModelListLiveData :LiveData<SnapshotStateList<PokemonListItem>> = _postModelListLiveData
     private val _pokemonLiveData = MutableLiveData<Pokemon>()
      val pokemonLiveData:LiveData<Pokemon> = _pokemonLiveData
      var offset:Int? = null
     init {
         homeRepository = HomeRepository()
-        viewModelScope.launch { getPokemonsList(offset) }
+        _postModelListLiveData.value = SnapshotStateList()
+       getPokemonsList(offset)
     }
 
     fun getPokemonsList(offset:Int?){
            viewModelScope.launch {
-               _postModelListLiveData.value=homeRepository?.getPokemonsList(offset)
+               homeRepository?.getPokemonsList(offset)
+                   ?.let { _postModelListLiveData.value?.addAll(it) }
            }}
 
         fun getPokemon(id:Int){
@@ -42,6 +45,12 @@ class HomeViewModel:ViewModel() {
     fun decreaseOffset():Int?{
         offset = offset?.minus(HomeRepository.limit)
         offset?.let { if(it<=0) offset=null }
+        getPokemonsList(offset)
+        return offset
+    }
+
+    fun increaseList(): Int? {
+        offset = offset?.plus(HomeRepository.limit) ?: 20
         getPokemonsList(offset)
         return offset
     }
